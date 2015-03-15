@@ -23,7 +23,7 @@ namespace ExtendedRoadUpgrade {
     }
 
     public class Mod : IUserMod {
-
+        
         public string Name {
             get { return "Extended Road Upgrade"; }
         }
@@ -35,7 +35,7 @@ namespace ExtendedRoadUpgrade {
     }
 
     // Class name needs to be changed if the mod is reloaded while the game is running
-    class BuildTool78 : ToolBase {
+    class BuildTool82 : ToolBase {
 
         public ToolMode toolMode = ToolMode.None;
         public ToolError toolError = ToolError.None;
@@ -157,7 +157,7 @@ namespace ExtendedRoadUpgrade {
 
         ModUI ui = new ModUI();
 
-        BuildTool78 buildTool = null;
+        BuildTool82 buildTool = null;
 
         public override void OnCreated(IThreading threading) {
             ui.selectedToolModeChanged += (ToolMode newMode) => {
@@ -172,9 +172,9 @@ namespace ExtendedRoadUpgrade {
 
         void CreateBuildTool() {
             if (buildTool == null) {
-                buildTool = ToolsModifierControl.toolController.gameObject.GetComponent<BuildTool78>();
+                buildTool = ToolsModifierControl.toolController.gameObject.GetComponent<BuildTool82>();
                 if (buildTool == null) {  
-                    buildTool = ToolsModifierControl.toolController.gameObject.AddComponent<BuildTool78>();
+                    buildTool = ToolsModifierControl.toolController.gameObject.AddComponent<BuildTool82>();
                     ModDebug.Log("Tool created: " + buildTool);
                 }
                 else {
@@ -186,7 +186,7 @@ namespace ExtendedRoadUpgrade {
         void DestroyBuildTool() {
             if (buildTool != null) {
                 ModDebug.Log("Tool destroyed");
-                BuildTool78.Destroy(buildTool);
+                BuildTool82.Destroy(buildTool);
                 buildTool = null;
             }
         }
@@ -322,7 +322,7 @@ namespace ExtendedRoadUpgrade {
             raycastInput.m_ignoreSegmentFlags = NetSegment.Flags.Untouchable;
 
             ToolBase.RaycastOutput raycastOutput;
-            if (BuildTool78.RayCast(raycastInput, out raycastOutput)) {
+            if (BuildTool82.RayCast(raycastInput, out raycastOutput)) {
 
                 int segmentIndex = raycastOutput.m_netSegment;
                 if (segmentIndex != 0) {
@@ -366,7 +366,7 @@ namespace ExtendedRoadUpgrade {
 
                 if (dragging) {
                     hitPosDelta = raycastOutput.m_hitPos - prevHitPos;
-                    if (hitPosDelta.magnitude < 5.0f) return;
+                    if (hitPosDelta.magnitude < 12.0f) return;
                 }
                 else {
                     prevHitPos = raycastOutput.m_hitPos;
@@ -488,7 +488,7 @@ namespace ExtendedRoadUpgrade {
             NetTool.ControlPoint middlePoint;
             NetTool.ControlPoint endPoint;
             GetSegmentControlPoints(segmentIndex, out startPoint, out middlePoint, out endPoint);
-
+            
             if (direction.magnitude > 0.0f) {
                 float dot = Vector3.Dot(direction.normalized, (endPoint.m_position - startPoint.m_position).normalized);
                 float threshold = Mathf.Cos(Mathf.PI / 4);

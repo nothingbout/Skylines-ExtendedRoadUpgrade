@@ -100,25 +100,20 @@ namespace ExtendedRoadUpgrade {
             GameObject rootObject = new GameObject("ExtendedRoadUpgradePanel");
             tabstrip = rootObject.AddComponent<UITabstrip>();
 
-            UIButton tabTemplate = (UIButton)UIButton.Instantiate(builtinTabstrip.tabs[0]);
-            tabTemplate.normalFgSprite = null;
-            tabTemplate.pressedFgSprite = null;
-            tabTemplate.hoveredFgSprite = null;
-            tabTemplate.focusedFgSprite = null;
-            tabTemplate.textColor = new Color32(127, 130, 130, 255);
-
-            //foreach (var obj in Resources.FindObjectsOfTypeAll<UIDynamicFont>()) {
-            //    ModDebug.Log("Font: " + obj);
-            //}
+            UIButton tabTemplate = (UIButton)builtinTabstrip.tabs[0];
 
             List<UIButton> tabs = new List<UIButton>();
-            //tabs.Add(tabstrip.AddTab("↑↓", tabTemplate, true));
-            //tabs.Add(tabstrip.AddTab("↑↑", tabTemplate, true));
             tabs.Add(tabstrip.AddTab("⇆", tabTemplate, true));
             tabs.Add(tabstrip.AddTab("⇉", tabTemplate, true));
 
-            // Some properties are not copied from the template, so they must be set after adding the tab
             foreach (UIButton tab in tabs) {
+                tab.name = "ExtendedRoadUpgradeButton";
+                tab.normalFgSprite = null;
+                tab.pressedFgSprite = null;
+                tab.hoveredFgSprite = null;
+                tab.focusedFgSprite = null;
+                tab.textColor = new Color32(127, 130, 130, 255);
+
                 tab.textScale = 2.0f;
                 tab.textHorizontalAlignment = UIHorizontalAlignment.Center;
                 tab.textVerticalAlignment = UIVerticalAlignment.Middle;
@@ -129,7 +124,9 @@ namespace ExtendedRoadUpgrade {
                 tab.playAudioEvents = true;
             }
 
+            tabs[0].name = "ExtendedRoadUpgradeButtonTwoWay";
             tabs[0].tooltip = "Upgrade To Two-Way Road";
+            tabs[1].name = "ExtendedRoadUpgradeButtonOneWay";
             tabs[1].tooltip = "Upgrade To One-Way Road";
 
             roadsOptionPanel.AttachUIComponent(tabstrip.gameObject);
@@ -137,7 +134,7 @@ namespace ExtendedRoadUpgrade {
             tabstrip.width = 80;
             tabstrip.selectedIndex = -1;
 
-            UIButton.Destroy(tabTemplate);
+            //UIButton.Destroy(tabTemplate.gameObject);
 
             if (builtinModeChangedHandler == null) {
                 builtinModeChangedHandler = (UIComponent component, int index) => {
