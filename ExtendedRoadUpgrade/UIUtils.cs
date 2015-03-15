@@ -25,24 +25,6 @@ namespace ExtendedRoadUpgrade {
 
         UIView uiRoot = null;
 
-        /*public override void OnUpdate(float realTimeDelta, float simulationTimeDelta) {
-            if (Input.GetKeyDown(KeyCode.Return)) {
-                if (UIInput.hoveredComponent != null) {
-                    ModDebug.Log(GetTransformPath(UIInput.hoveredComponent.transform) + " (" + UIInput.hoveredComponent.GetType() + ")");
-                }
-            }
-        }*/
-
-        string GetTransformPath(Transform transform) {
-            string path = transform.name;
-            Transform t = transform.parent;
-            while (t != null) {
-                path = t.name + "/" + path;
-                t = t.parent;
-            }
-            return path;
-        }
-
         void FindUIRoot() {
             uiRoot = null;
 
@@ -52,6 +34,16 @@ namespace ExtendedRoadUpgrade {
                     break;
                 }
             }
+        }
+
+        public string GetTransformPath(Transform transform) {
+            string path = transform.name;
+            Transform t = transform.parent;
+            while (t != null) {
+                path = t.name + "/" + path;
+                t = t.parent;
+            }
+            return path;
         }
 
         public T FindComponent<T>(string name, UIComponent parent = null, FindOptions options = FindOptions.None) where T : UIComponent {

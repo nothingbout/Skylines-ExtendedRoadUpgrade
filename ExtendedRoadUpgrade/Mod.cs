@@ -35,7 +35,7 @@ namespace ExtendedRoadUpgrade {
     }
 
     // Class name needs to be changed if the mod is reloaded while the game is running
-    class BuildTool77 : ToolBase {
+    class BuildTool78 : ToolBase {
 
         public ToolMode toolMode = ToolMode.None;
         public ToolError toolError = ToolError.None;
@@ -157,7 +157,7 @@ namespace ExtendedRoadUpgrade {
 
         ModUI ui = new ModUI();
 
-        BuildTool77 buildTool = null;
+        BuildTool78 buildTool = null;
 
         public override void OnCreated(IThreading threading) {
             ui.selectedToolModeChanged += (ToolMode newMode) => {
@@ -172,9 +172,9 @@ namespace ExtendedRoadUpgrade {
 
         void CreateBuildTool() {
             if (buildTool == null) {
-                buildTool = ToolsModifierControl.toolController.gameObject.GetComponent<BuildTool77>();
+                buildTool = ToolsModifierControl.toolController.gameObject.GetComponent<BuildTool78>();
                 if (buildTool == null) {  
-                    buildTool = ToolsModifierControl.toolController.gameObject.AddComponent<BuildTool77>();
+                    buildTool = ToolsModifierControl.toolController.gameObject.AddComponent<BuildTool78>();
                     ModDebug.Log("Tool created: " + buildTool);
                 }
                 else {
@@ -186,7 +186,7 @@ namespace ExtendedRoadUpgrade {
         void DestroyBuildTool() {
             if (buildTool != null) {
                 ModDebug.Log("Tool destroyed");
-                BuildTool77.Destroy(buildTool);
+                BuildTool78.Destroy(buildTool);
                 buildTool = null;
             }
         }
@@ -229,6 +229,13 @@ namespace ExtendedRoadUpgrade {
         }
 
         void _OnUpdate() {
+
+            /*if (Input.GetKeyDown(KeyCode.Delete)) {
+                if (UIInput.hoveredComponent != null) {
+                    ModDebug.Log(UIUtils.Instance.GetTransformPath(UIInput.hoveredComponent.transform) + " (" + UIInput.hoveredComponent.GetType() + ")");
+                }
+            }*/
+
             if (roadsPanel == null) {
                 roadsPanel = UIView.Find<UIPanel>("RoadsPanel");
             }
@@ -315,7 +322,7 @@ namespace ExtendedRoadUpgrade {
             raycastInput.m_ignoreSegmentFlags = NetSegment.Flags.Untouchable;
 
             ToolBase.RaycastOutput raycastOutput;
-            if (BuildTool77.RayCast(raycastInput, out raycastOutput)) {
+            if (BuildTool78.RayCast(raycastInput, out raycastOutput)) {
 
                 int segmentIndex = raycastOutput.m_netSegment;
                 if (segmentIndex != 0) {
@@ -483,14 +490,18 @@ namespace ExtendedRoadUpgrade {
             GetSegmentControlPoints(segmentIndex, out startPoint, out middlePoint, out endPoint);
 
             if (direction.magnitude > 0.0f) {
-                bool inverted = (net.m_segments.m_buffer[segmentIndex].m_flags & NetSegment.Flags.Invert) != 0;
-
                 float dot = Vector3.Dot(direction.normalized, (endPoint.m_position - startPoint.m_position).normalized);
                 float threshold = Mathf.Cos(Mathf.PI / 4);
 
                 if (dot > -threshold && dot < threshold) return 0;
 
                 if (roadDirectionMatters) {
+                    bool inverted = (net.m_segments.m_buffer[segmentIndex].m_flags & NetSegment.Flags.Invert) != 0;
+
+                    if (Singleton<SimulationManager>.instance.m_metaData.m_invertTraffic == SimulationMetaData.MetaBool.True) {
+                        inverted = !inverted; // roads need to be placed in the opposite direction with left-hand traffic
+                    }
+
                     bool reverseDirection = inverted ? (dot > 0.0f) : (dot < -0.0f);
 
                     if (reverseDirection) {
