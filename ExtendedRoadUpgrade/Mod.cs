@@ -34,8 +34,8 @@ namespace ExtendedRoadUpgrade {
 
     }
 
-    // Class name needs to be changed if the mod is reloaded while the game is running
-    class BuildTool82 : ToolBase {
+    // Class name needs to be changed if the mod is reloaded while the game is running (or if you have another version of the mod installed)
+    class BuildTool83 : ToolBase {
 
         public ToolMode toolMode = ToolMode.None;
         public ToolError toolError = ToolError.None;
@@ -157,7 +157,7 @@ namespace ExtendedRoadUpgrade {
 
         ModUI ui = new ModUI();
 
-        BuildTool82 buildTool = null;
+        BuildTool83 buildTool = null;
 
         public override void OnCreated(IThreading threading) {
             ui.selectedToolModeChanged += (ToolMode newMode) => {
@@ -172,9 +172,9 @@ namespace ExtendedRoadUpgrade {
 
         void CreateBuildTool() {
             if (buildTool == null) {
-                buildTool = ToolsModifierControl.toolController.gameObject.GetComponent<BuildTool82>();
+                buildTool = ToolsModifierControl.toolController.gameObject.GetComponent<BuildTool83>();
                 if (buildTool == null) {  
-                    buildTool = ToolsModifierControl.toolController.gameObject.AddComponent<BuildTool82>();
+                    buildTool = ToolsModifierControl.toolController.gameObject.AddComponent<BuildTool83>();
                     ModDebug.Log("Tool created: " + buildTool);
                 }
                 else {
@@ -186,7 +186,7 @@ namespace ExtendedRoadUpgrade {
         void DestroyBuildTool() {
             if (buildTool != null) {
                 ModDebug.Log("Tool destroyed");
-                BuildTool82.Destroy(buildTool);
+                BuildTool83.Destroy(buildTool);
                 buildTool = null;
             }
         }
@@ -194,17 +194,19 @@ namespace ExtendedRoadUpgrade {
         void SetToolMode(ToolMode mode) {
             if (mode == toolMode) return;
 
+            if (mode != ToolMode.None) {
+                FindRoadPrefabs();
+                CreateBuildTool();
+                ToolsModifierControl.toolController.CurrentTool = buildTool;
+            }
+
             if (mode == ToolMode.Oneway) {
                 ModDebug.Log("One-way mode activated");
                 toolMode = ToolMode.Oneway;
-                CreateBuildTool();
-                ToolsModifierControl.toolController.CurrentTool = buildTool;
             }
             else if (mode == ToolMode.Twoway) {
                 ModDebug.Log("Two-way mode activated");
                 toolMode = ToolMode.Twoway;
-                CreateBuildTool();
-                ToolsModifierControl.toolController.CurrentTool = buildTool;
             }
             else {
                 ModDebug.Log("Tool disabled");
@@ -322,7 +324,7 @@ namespace ExtendedRoadUpgrade {
             raycastInput.m_ignoreSegmentFlags = NetSegment.Flags.Untouchable;
 
             ToolBase.RaycastOutput raycastOutput;
-            if (BuildTool82.RayCast(raycastInput, out raycastOutput)) {
+            if (BuildTool83.RayCast(raycastInput, out raycastOutput)) {
 
                 int segmentIndex = raycastOutput.m_netSegment;
                 if (segmentIndex != 0) {
@@ -407,13 +409,9 @@ namespace ExtendedRoadUpgrade {
 
                     NetInfo newPrefab;
                     if (!roadPrefabs.TryGetValue(newPrefabName, out newPrefab) || newPrefab == null) {
-                        FindRoadPrefabs();
-
-                        if (!roadPrefabs.TryGetValue(newPrefabName, out newPrefab) || newPrefab == null) {
-                            ModDebug.Error("Prefab not found: " + newPrefabName);
-                            error = ToolError.Unknown;
-                            return;
-                        }
+                        ModDebug.Error("Prefab not found: " + newPrefabName);
+                        error = ToolError.Unknown;
+                        return;
                     }
 
                     newRoadPrefab = newPrefab;
@@ -442,6 +440,8 @@ namespace ExtendedRoadUpgrade {
                     }
                 }
             }
+
+            ModDebug.Log("Found " + roadPrefabs.Count + " road prefabs");
         }
 
         string FindMatchingName(string originalName, string[] fromNames, string[] toNames) {
