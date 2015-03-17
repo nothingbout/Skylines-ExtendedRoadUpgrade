@@ -19,7 +19,8 @@ namespace ExtendedRoadUpgrade {
         AlreadyBuilt,
         AlreadyTwoway, 
         SameDirection, 
-        CannotUpgradeThisType
+        CannotUpgradeThisType, 
+        OutOfArea
     }
 
     public class Mod : IUserMod {
@@ -35,7 +36,7 @@ namespace ExtendedRoadUpgrade {
     }
 
     // Class name needs to be changed if the mod is reloaded while the game is running (or if you have another version of the mod installed)
-    class BuildTool83 : ToolBase {
+    class BuildTool89 : ToolBase {
 
         public ToolMode toolMode = ToolMode.None;
         public ToolError toolError = ToolError.None;
@@ -72,8 +73,9 @@ namespace ExtendedRoadUpgrade {
                 int cost;
                 int productionRate;
                 // Initializes colliding arrays
-                NetTool.CreateNode(newPrefab != null ? newPrefab : segment.Info, startPoint, middlePoint, endPoint, 
+                ToolErrors errors = NetTool.CreateNode(newPrefab != null ? newPrefab : segment.Info, startPoint, middlePoint, endPoint, 
                     NetTool.m_nodePositionsSimulation, 1000, true, false, true, false, false, (ushort)0, out node, out outSegment, out cost, out productionRate);
+
             }
         }
 
@@ -107,6 +109,7 @@ namespace ExtendedRoadUpgrade {
                 if (toolError != ToolError.None) text += "<color #ff7e00>";
 
                 if (toolError == ToolError.Unknown) text += "Unknown error";
+                else if (toolError == ToolError.OutOfArea) text += "Out of city limits!";
                 else if (toolError == ToolError.AlreadyTwoway) text += "Road is already two-way";
                 else if (toolError == ToolError.SameDirection) text += "Road already goes this direction";
                 else if (toolError == ToolError.CannotUpgradeThisType) {
@@ -157,7 +160,7 @@ namespace ExtendedRoadUpgrade {
 
         ModUI ui = new ModUI();
 
-        BuildTool83 buildTool = null;
+        BuildTool89 buildTool = null;
 
         public override void OnCreated(IThreading threading) {
             ui.selectedToolModeChanged += (ToolMode newMode) => {
@@ -172,9 +175,9 @@ namespace ExtendedRoadUpgrade {
 
         void CreateBuildTool() {
             if (buildTool == null) {
-                buildTool = ToolsModifierControl.toolController.gameObject.GetComponent<BuildTool83>();
+                buildTool = ToolsModifierControl.toolController.gameObject.GetComponent<BuildTool89>();
                 if (buildTool == null) {  
-                    buildTool = ToolsModifierControl.toolController.gameObject.AddComponent<BuildTool83>();
+                    buildTool = ToolsModifierControl.toolController.gameObject.AddComponent<BuildTool89>();
                     ModDebug.Log("Tool created: " + buildTool);
                 }
                 else {
@@ -186,7 +189,7 @@ namespace ExtendedRoadUpgrade {
         void DestroyBuildTool() {
             if (buildTool != null) {
                 ModDebug.Log("Tool destroyed");
-                BuildTool83.Destroy(buildTool);
+                BuildTool89.Destroy(buildTool);
                 buildTool = null;
             }
         }
@@ -292,16 +295,16 @@ namespace ExtendedRoadUpgrade {
             }
         }
 
-        public override void OnBeforeSimulationTick() {
+        public override void OnBeforeSimulationFrame() {
             try {
-                _OnBeforeSimulationTick();
+                _OnBeforeSimulationFrame();
             }
             catch (Exception e) {
                 ModDebug.Error(e);
             }
         }
 
-        void _OnBeforeSimulationTick() {
+        void _OnBeforeSimulationFrame() {
             if (toolMode == ToolMode.None) return;
 
             if (!mouseDown) {
@@ -324,33 +327,52 @@ namespace ExtendedRoadUpgrade {
             raycastInput.m_ignoreSegmentFlags = NetSegment.Flags.Untouchable;
 
             ToolBase.RaycastOutput raycastOutput;
-            if (BuildTool83.RayCast(raycastInput, out raycastOutput)) {
+            if (BuildTool89.RayCast(raycastInput, out raycastOutput)) {
 
                 int segmentIndex = raycastOutput.m_netSegment;
                 if (segmentIndex != 0) {
 
+                    NetManager net = Singleton<NetManager>.instance;
                     NetInfo newRoadPrefab = null;
 
-                    if (mouseDown) {
-                        HandleMouseDrag(ref raycastOutput, ref toolError, false, ref newRoadPrefab);
+                    NetTool.ControlPoint startPoint;
+                    NetTool.ControlPoint middlePoint;
+                    NetTool.ControlPoint endPoint;
 
-                        if (segmentIndex == prevBuiltSegmentIndex) {
-                            toolError = ToolError.AlreadyBuilt;
-                        }
+                    GetSegmentControlPoints(segmentIndex, out startPoint, out middlePoint, out endPoint);
+
+                    ushort node;
+                    ushort outSegment;
+                    int cost;
+                    int productionRate;
+                    // Check for out-of-area error and initialized collide arrays for visualization
+                    ToolBase.ToolErrors errors = NetTool.CreateNode(net.m_segments.m_buffer[segmentIndex].Info,
+                        startPoint, middlePoint, endPoint, NetTool.m_nodePositionsSimulation, 1000,
+                        true, false, true, false, false, (ushort)0, out node, out outSegment, out cost, out productionRate);
+
+                    if ((errors & ToolBase.ToolErrors.OutOfArea) != 0) {
+                        toolError = ToolError.OutOfArea;
                     }
                     else {
-                        HandleMouseDrag(ref raycastOutput, ref toolError, true, ref newRoadPrefab);
+                        if (mouseDown) {
+                            HandleMouseDrag(ref raycastOutput, ref toolError, false, ref newRoadPrefab, ref segmentIndex);
+
+                            if (segmentIndex == prevBuiltSegmentIndex) {
+                                toolError = ToolError.AlreadyBuilt;
+                            }
+                        }
+                        else {
+                            HandleMouseDrag(ref raycastOutput, ref toolError, true, ref newRoadPrefab, ref segmentIndex);
+                        }
                     }
 
                     if (buildTool != null) {
-                        NetManager net = Singleton<NetManager>.instance;
                         buildTool.segment = net.m_segments.m_buffer[segmentIndex];
                         buildTool.segmentIndex = segmentIndex;
                         buildTool.isHoveringSegment = true;
                         if (newRoadPrefab != null) buildTool.newPrefab = newRoadPrefab;
                         GetSegmentControlPoints(segmentIndex, out buildTool.startPoint, out buildTool.middlePoint, out buildTool.endPoint);
                     }
-
                 }
             }
 
@@ -359,7 +381,7 @@ namespace ExtendedRoadUpgrade {
             }
         }
 
-        void HandleMouseDrag(ref ToolBase.RaycastOutput raycastOutput, ref ToolError error, bool test, ref NetInfo newRoadPrefab) {
+        void HandleMouseDrag(ref ToolBase.RaycastOutput raycastOutput, ref ToolError error, bool test, ref NetInfo newRoadPrefab, ref int newSegmentIndex) {
 
             Vector3 hitPosDelta = Vector3.zero;
 
@@ -416,13 +438,14 @@ namespace ExtendedRoadUpgrade {
 
                     newRoadPrefab = newPrefab;
 
-                    int newSegmentIndex = RebuildSegment(segmentIndex, newPrefab, toolMode == ToolMode.Oneway, raycastOutput.m_hitPos, hitPosDelta, ref error);
+                    int newIndex = RebuildSegment(segmentIndex, newPrefab, toolMode == ToolMode.Oneway, raycastOutput.m_hitPos, hitPosDelta, ref error);
 
-                    if (newSegmentIndex != 0) {
+                    if (newIndex != 0) {
                         if (error != ToolError.None) return;
 
                         prevBuiltSegmentIndex = newSegmentIndex;
                         prevRebuildTime = Time.time;
+                        newSegmentIndex = newIndex;
                     }
                 }
                 else {
