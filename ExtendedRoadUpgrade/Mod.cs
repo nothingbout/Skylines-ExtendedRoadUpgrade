@@ -295,16 +295,16 @@ namespace ExtendedRoadUpgrade {
             }
         }
 
-        public override void OnBeforeSimulationFrame() {
+        public override void OnBeforeSimulationTick() {
             try {
-                _OnBeforeSimulationFrame();
+                _OnBeforeSimulationTick();
             }
             catch (Exception e) {
                 ModDebug.Error(e);
             }
         }
 
-        void _OnBeforeSimulationFrame() {
+        void _OnBeforeSimulationTick() {
             if (toolMode == ToolMode.None) return;
 
             if (!mouseDown) {
