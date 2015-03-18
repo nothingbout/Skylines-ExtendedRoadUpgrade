@@ -55,6 +55,7 @@ namespace ExtendedRoadUpgrade {
                 if (!Initialize()) return;
             }
 
+            ModDebug.Log("Showing UI");
             isVisible = true;
         }
 
@@ -72,18 +73,20 @@ namespace ExtendedRoadUpgrade {
 
                 UIView.Destroy(tabstrip);
                 tabstrip = null;
-                isVisible = false;
             }
+            isVisible = false;
         }
 
         bool Initialize() {
+            ModDebug.Log("Initializing UI");
+
             if (UIUtils.Instance == null) return false;
 
             roadsOptionPanel = UIUtils.Instance.FindComponent<UIComponent>("RoadsOptionPanel", null, UIUtils.FindOptions.NameContains);
-            if (roadsOptionPanel == null) return false;
+            if (roadsOptionPanel == null || !roadsOptionPanel.gameObject.activeInHierarchy) return false;
 
             builtinTabstrip = UIUtils.Instance.FindComponent<UITabstrip>("ToolMode", roadsOptionPanel);
-            if (builtinTabstrip == null) return false;
+            if (builtinTabstrip == null || !builtinTabstrip.gameObject.activeInHierarchy) return false;
 
             tabstrip = UIUtils.Instance.FindComponent<UITabstrip>("ExtendedRoadUpgradePanel");
             if (tabstrip != null) {
@@ -97,6 +100,8 @@ namespace ExtendedRoadUpgrade {
         }
 
         void CreateView() {
+            ModDebug.Log("Creating view");
+
             GameObject rootObject = new GameObject("ExtendedRoadUpgradePanel");
             tabstrip = rootObject.AddComponent<UITabstrip>();
 

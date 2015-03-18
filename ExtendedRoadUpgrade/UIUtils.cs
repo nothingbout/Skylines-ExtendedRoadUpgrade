@@ -26,10 +26,12 @@ namespace ExtendedRoadUpgrade {
         UIView uiRoot = null;
 
         void FindUIRoot() {
+            ModDebug.Log("Finding UIRoot");
             uiRoot = null;
 
             foreach (UIView view in UIView.FindObjectsOfType<UIView>()) {
                 if (view.transform.parent == null && view.name == "UIView") {
+                    ModDebug.Log("Found UIRoot");
                     uiRoot = view;
                     break;
                 }
@@ -49,7 +51,10 @@ namespace ExtendedRoadUpgrade {
         public T FindComponent<T>(string name, UIComponent parent = null, FindOptions options = FindOptions.None) where T : UIComponent {
             if (uiRoot == null) {
                 FindUIRoot();
-                if (uiRoot == null) return null;
+                if (uiRoot == null) {
+                    ModDebug.Warning("UIRoot not found");
+                    return null;
+                }
             }
 
             foreach (T component in UIComponent.FindObjectsOfType<T>()) {

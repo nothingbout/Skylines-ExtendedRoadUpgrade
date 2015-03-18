@@ -36,7 +36,7 @@ namespace ExtendedRoadUpgrade {
     }
 
     // Class name needs to be changed if the mod is reloaded while the game is running (or if you have another version of the mod installed)
-    class BuildTool95 : ToolBase {
+    class BuildTool100 : ToolBase {
 
         public ToolMode toolMode = ToolMode.None;
         public ToolError toolError = ToolError.None;
@@ -134,7 +134,24 @@ namespace ExtendedRoadUpgrade {
         }
     }
 
+    public class LoadingExtension : LoadingExtensionBase {
+
+        public override void OnLevelLoaded(LoadMode mode) {
+            if (ThreadingExtension.Instance != null) {
+                ThreadingExtension.Instance.OnLevelLoaded(mode);
+            }
+        }
+
+        public override void OnLevelUnloading() {
+            if (ThreadingExtension.Instance != null) {
+                ThreadingExtension.Instance.OnLevelUnloading();
+            }
+        }
+    }
+
     public class ThreadingExtension : ThreadingExtensionBase {
+
+        public static ThreadingExtension Instance { get; private set; }
 
         string[] twowayNames = { "Basic Road", "Large Road" };
         string[] onewayNames = { "Oneway Road", "Large Oneway" };
@@ -161,10 +178,23 @@ namespace ExtendedRoadUpgrade {
         UIPanel roadsPanel = null; 
 
         ModUI ui = new ModUI();
+        bool loadingLevel = false;
 
-        BuildTool95 buildTool = null;
+        BuildTool100 buildTool = null;
+
+        public void OnLevelUnloading() {
+            ui.DestroyView();
+            toolMode = ToolMode.None;
+            loadingLevel = true;
+        }
+
+        public void OnLevelLoaded(LoadMode mode) {
+            loadingLevel = false;
+            ModDebug.Log("OnLevelLoaded, UI visible: " + ui.isVisible);
+        }
 
         public override void OnCreated(IThreading threading) {
+            Instance = this;
             ui.selectedToolModeChanged += (ToolMode newMode) => {
                 SetToolMode(newMode);
             };
@@ -177,9 +207,9 @@ namespace ExtendedRoadUpgrade {
 
         void CreateBuildTool() {
             if (buildTool == null) {
-                buildTool = ToolsModifierControl.toolController.gameObject.GetComponent<BuildTool95>();
+                buildTool = ToolsModifierControl.toolController.gameObject.GetComponent<BuildTool100>();
                 if (buildTool == null) {  
-                    buildTool = ToolsModifierControl.toolController.gameObject.AddComponent<BuildTool95>();
+                    buildTool = ToolsModifierControl.toolController.gameObject.AddComponent<BuildTool100>();
                     ModDebug.Log("Tool created: " + buildTool);
                 }
                 else {
@@ -191,7 +221,7 @@ namespace ExtendedRoadUpgrade {
         void DestroyBuildTool() {
             if (buildTool != null) {
                 ModDebug.Log("Tool destroyed");
-                BuildTool95.Destroy(buildTool);
+                BuildTool100.Destroy(buildTool);
                 buildTool = null;
             }
         }
@@ -249,6 +279,7 @@ namespace ExtendedRoadUpgrade {
         }
 
         void _OnUpdate() {
+            if (loadingLevel) return;
 
             /*if (Input.GetKeyDown(KeyCode.Delete)) {
                 if (UIInput.hoveredComponent != null) {
@@ -278,6 +309,8 @@ namespace ExtendedRoadUpgrade {
                 if (netTool == null) return;
 
                 raycastService = new ToolBase.RaycastService(netTool.m_prefab.m_class.m_service, netTool.m_prefab.m_class.m_subService, netTool.m_prefab.m_class.m_layer);
+
+                ModDebug.Log("UI visible: " + ui.isVisible);
             }
 
             if (!ui.isVisible) {
@@ -343,7 +376,7 @@ namespace ExtendedRoadUpgrade {
             raycastInput.m_ignoreSegmentFlags = NetSegment.Flags.Untouchable;
 
             ToolBase.RaycastOutput raycastOutput;
-            if (BuildTool95.RayCast(raycastInput, out raycastOutput)) {
+            if (BuildTool100.RayCast(raycastInput, out raycastOutput)) {
 
                 int segmentIndex = raycastOutput.m_netSegment;
                 if (segmentIndex != 0) {
