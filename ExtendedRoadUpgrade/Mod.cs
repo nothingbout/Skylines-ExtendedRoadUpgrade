@@ -36,7 +36,7 @@ namespace ExtendedRoadUpgrade {
     }
 
     // Class name needs to be changed if the mod is reloaded while the game is running (or if you have another version of the mod installed)
-    class BuildTool90 : ToolBase {
+    class BuildTool95 : ToolBase {
 
         public ToolMode toolMode = ToolMode.None;
         public ToolError toolError = ToolError.None;
@@ -162,7 +162,7 @@ namespace ExtendedRoadUpgrade {
 
         ModUI ui = new ModUI();
 
-        BuildTool90 buildTool = null;
+        BuildTool95 buildTool = null;
 
         public override void OnCreated(IThreading threading) {
             ui.selectedToolModeChanged += (ToolMode newMode) => {
@@ -177,9 +177,9 @@ namespace ExtendedRoadUpgrade {
 
         void CreateBuildTool() {
             if (buildTool == null) {
-                buildTool = ToolsModifierControl.toolController.gameObject.GetComponent<BuildTool90>();
+                buildTool = ToolsModifierControl.toolController.gameObject.GetComponent<BuildTool95>();
                 if (buildTool == null) {  
-                    buildTool = ToolsModifierControl.toolController.gameObject.AddComponent<BuildTool90>();
+                    buildTool = ToolsModifierControl.toolController.gameObject.AddComponent<BuildTool95>();
                     ModDebug.Log("Tool created: " + buildTool);
                 }
                 else {
@@ -191,7 +191,7 @@ namespace ExtendedRoadUpgrade {
         void DestroyBuildTool() {
             if (buildTool != null) {
                 ModDebug.Log("Tool destroyed");
-                BuildTool90.Destroy(buildTool);
+                BuildTool95.Destroy(buildTool);
                 buildTool = null;
             }
         }
@@ -343,7 +343,7 @@ namespace ExtendedRoadUpgrade {
             raycastInput.m_ignoreSegmentFlags = NetSegment.Flags.Untouchable;
 
             ToolBase.RaycastOutput raycastOutput;
-            if (BuildTool90.RayCast(raycastInput, out raycastOutput)) {
+            if (BuildTool95.RayCast(raycastInput, out raycastOutput)) {
 
                 int segmentIndex = raycastOutput.m_netSegment;
                 if (segmentIndex != 0) {
