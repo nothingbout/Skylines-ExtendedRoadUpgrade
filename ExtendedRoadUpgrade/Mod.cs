@@ -64,6 +64,10 @@ namespace ExtendedRoadUpgrade {
         protected override void OnDisable() {
         }
 
+		//public static ToolBase.ToolErrors CreateNode(NetInfo info, NetTool.ControlPoint startPoint, NetTool.ControlPoint middlePoint, NetTool.ControlPoint endPoint, FastList<NetTool.NodePosition> nodeBuffer, 
+		//                                             int maxSegments, bool test, bool visualize, bool autoFix, bool needMoney, bool invert, bool switchDir, ushort relocateBuildingID, 
+		//                                             out ushort node, out ushort segment, out int cost, out int productionRate)
+
         public override void SimulationStep() {
             base.SimulationStep();
 
@@ -74,7 +78,7 @@ namespace ExtendedRoadUpgrade {
                 int productionRate;
                 // Initializes colliding arrays
                 ToolErrors errors = NetTool.CreateNode(newPrefab != null ? newPrefab : segment.Info, startPoint, middlePoint, endPoint, 
-                    NetTool.m_nodePositionsSimulation, 1000, true, false, true, false, false, (ushort)0, out node, out outSegment, out cost, out productionRate);
+                    NetTool.m_nodePositionsSimulation, 1000, true, false, true, false, false, false, (ushort)0, out node, out outSegment, out cost, out productionRate);
 
             }
         }
@@ -413,7 +417,7 @@ namespace ExtendedRoadUpgrade {
                     // Check for out-of-area error and initialized collide arrays for visualization
                     ToolBase.ToolErrors errors = NetTool.CreateNode(net.m_segments.m_buffer[segmentIndex].Info,
                         startPoint, middlePoint, endPoint, NetTool.m_nodePositionsSimulation, 1000,
-                        true, false, true, false, false, (ushort)0, out node, out outSegment, out cost, out productionRate);
+                        true, false, true, false, false, false, (ushort)0, out node, out outSegment, out cost, out productionRate);
 
                     if ((errors & ToolBase.ToolErrors.OutOfArea) != 0) {
                         toolError = ToolError.OutOfArea;
@@ -617,7 +621,7 @@ namespace ExtendedRoadUpgrade {
             int cost = 0;
             int productionRate = 0;
              
-            NetTool.CreateNode(newPrefab, startPoint, middlePoint, endPoint, NetTool.m_nodePositionsSimulation, 1000, test, visualize, autoFix, needMoney, invert, (ushort)0, out node, out segment, out cost, out productionRate);
+			NetTool.CreateNode(newPrefab, startPoint, middlePoint, endPoint, NetTool.m_nodePositionsSimulation, 1000, test, visualize, autoFix, needMoney, invert, false, (ushort)0, out node, out segment, out cost, out productionRate);
 
             if (segment != 0) {
                 if (newPrefab.m_class.m_service == ItemClass.Service.Road) {
