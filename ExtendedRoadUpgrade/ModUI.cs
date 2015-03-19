@@ -26,11 +26,13 @@ namespace ExtendedRoadUpgrade {
                         }
 
                         ignoreBuiltinTabstripEvents = true;
+                        ModDebug.Log("Setting builtin tabstrip mode: " + (-1));
                         builtinTabstrip.selectedIndex = -1;
                         ignoreBuiltinTabstripEvents = false;
                     }
                     else if (builtinTabstrip.selectedIndex < 0 && originalBuiltinTabsripSelectedIndex >= 0) {
                         ignoreBuiltinTabstripEvents = true;
+                        ModDebug.Log("Setting builtin tabstrip mode: " + originalBuiltinTabsripSelectedIndex);
                         builtinTabstrip.selectedIndex = originalBuiltinTabsripSelectedIndex;
                         ignoreBuiltinTabstripEvents = false;
                     }
@@ -60,10 +62,6 @@ namespace ExtendedRoadUpgrade {
         }
 
         PropertyChangedEventHandler<int> builtinModeChangedHandler = null;
-
-        public void SetBuiltinMode(int mode) {
-            builtinTabstrip.selectedIndex = mode;
-        }
 
         public void DestroyView() {
             if (tabstrip != null) {

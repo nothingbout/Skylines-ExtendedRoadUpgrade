@@ -36,7 +36,7 @@ namespace ExtendedRoadUpgrade {
     }
 
     // Class name needs to be changed if the mod is reloaded while the game is running (or if you have another version of the mod installed)
-    class BuildTool100 : ToolBase {
+    class BuildTool118 : ToolBase {
 
         public ToolMode toolMode = ToolMode.None;
         public ToolError toolError = ToolError.None;
@@ -180,7 +180,7 @@ namespace ExtendedRoadUpgrade {
         ModUI ui = new ModUI();
         bool loadingLevel = false;
 
-        BuildTool100 buildTool = null;
+        BuildTool118 buildTool = null;
 
         public void OnLevelUnloading() {
             ui.DestroyView();
@@ -207,9 +207,9 @@ namespace ExtendedRoadUpgrade {
 
         void CreateBuildTool() {
             if (buildTool == null) {
-                buildTool = ToolsModifierControl.toolController.gameObject.GetComponent<BuildTool100>();
+                buildTool = ToolsModifierControl.toolController.gameObject.GetComponent<BuildTool118>();
                 if (buildTool == null) {  
-                    buildTool = ToolsModifierControl.toolController.gameObject.AddComponent<BuildTool100>();
+                    buildTool = ToolsModifierControl.toolController.gameObject.AddComponent<BuildTool118>();
                     ModDebug.Log("Tool created: " + buildTool);
                 }
                 else {
@@ -221,7 +221,7 @@ namespace ExtendedRoadUpgrade {
         void DestroyBuildTool() {
             if (buildTool != null) {
                 ModDebug.Log("Tool destroyed");
-                BuildTool100.Destroy(buildTool);
+                BuildTool118.Destroy(buildTool);
                 buildTool = null;
             }
         }
@@ -239,22 +239,24 @@ namespace ExtendedRoadUpgrade {
             ModDebug.Log("Found " + roadPrefabs.Count + " road prefabs");
         }
 
-        void SetToolMode(ToolMode mode) {
+        void SetToolMode(ToolMode mode, bool resetNetToolModeToStraight = false) {
             if (mode == toolMode) return;
 
             if (mode != ToolMode.None) {
                 FindRoadPrefabs();
                 CreateBuildTool();
                 ToolsModifierControl.toolController.CurrentTool = buildTool;
-            }
 
-            if (mode == ToolMode.Oneway) {
-                ModDebug.Log("One-way mode activated");
-                toolMode = ToolMode.Oneway;
-            }
-            else if (mode == ToolMode.Twoway) {
-                ModDebug.Log("Two-way mode activated");
-                toolMode = ToolMode.Twoway;
+                if (mode == ToolMode.Oneway) {
+                    ModDebug.Log("One-way mode activated");
+                    toolMode = ToolMode.Oneway;
+                }
+                else if (mode == ToolMode.Twoway) {
+                    ModDebug.Log("Two-way mode activated");
+                    toolMode = ToolMode.Twoway;
+                }
+
+                ui.toolMode = toolMode;
             }
             else {
                 ModDebug.Log("Tool disabled");
@@ -263,10 +265,16 @@ namespace ExtendedRoadUpgrade {
                 if (ToolsModifierControl.toolController.CurrentTool == buildTool || ToolsModifierControl.toolController.CurrentTool == null) {
                     ToolsModifierControl.toolController.CurrentTool = netTool;
                 }
-                DestroyBuildTool();
-            }
 
-            ui.toolMode = toolMode;
+                DestroyBuildTool();
+
+                ui.toolMode = toolMode;
+
+                if (resetNetToolModeToStraight) {
+                    netTool.m_mode = NetTool.Mode.Straight;
+                    ModDebug.Log("Reseted netTool mode: " + netTool.m_mode);
+                }
+            }
         }
 
         public override void OnUpdate(float realTimeDelta, float simulationTimeDelta) {
@@ -287,12 +295,19 @@ namespace ExtendedRoadUpgrade {
                 }
             }*/
 
+            if (Input.GetKeyDown(KeyCode.Return)) {
+                ModDebug.Log(netTool.m_prefab + " " + netTool.m_mode);
+            }
+
             if (roadsPanel == null) {
                 roadsPanel = UIView.Find<UIPanel>("RoadsPanel");
             }
 
-            if (roadsPanel == null || !roadsPanel.isVisible) { 
-                if (toolMode != ToolMode.None) SetToolMode(ToolMode.None);
+            if (roadsPanel == null || !roadsPanel.isVisible) {
+                if (toolMode != ToolMode.None) {
+                    ModDebug.Log("Roads panel no longer visible");
+                    SetToolMode(ToolMode.None, true);
+                }
                 return;
             }
 
@@ -300,7 +315,7 @@ namespace ExtendedRoadUpgrade {
                 foreach (var tool in ToolsModifierControl.toolController.Tools) {
                     NetTool nt = tool as NetTool;
                     if (nt != null && nt.m_prefab != null) {
-                        ModDebug.Log("NetTool found");
+                        ModDebug.Log("NetTool found: " + nt.name);
                         netTool = nt;
                         break;
                     }
@@ -332,6 +347,7 @@ namespace ExtendedRoadUpgrade {
                 currentTime = Time.time;
 
                 if (ToolsModifierControl.toolController.CurrentTool != buildTool) {
+                    ModDebug.Log("Another tool selected");
                     SetToolMode(ToolMode.None);
                 }
             }
@@ -376,7 +392,7 @@ namespace ExtendedRoadUpgrade {
             raycastInput.m_ignoreSegmentFlags = NetSegment.Flags.Untouchable;
 
             ToolBase.RaycastOutput raycastOutput;
-            if (BuildTool100.RayCast(raycastInput, out raycastOutput)) {
+            if (BuildTool118.RayCast(raycastInput, out raycastOutput)) {
 
                 int segmentIndex = raycastOutput.m_netSegment;
                 if (segmentIndex != 0) {
@@ -418,7 +434,7 @@ namespace ExtendedRoadUpgrade {
                     if (buildTool != null) {
                         buildTool.segment = net.m_segments.m_buffer[segmentIndex];
                         buildTool.segmentIndex = segmentIndex;
-                        buildTool.isHoveringSegment = true;
+                        buildTool.isHoveringSegment = toolError != ToolError.Unknown;
                         if (newRoadPrefab != null) buildTool.newPrefab = newRoadPrefab;
                         GetSegmentControlPoints(segmentIndex, out buildTool.startPoint, out buildTool.middlePoint, out buildTool.endPoint);
                     }
