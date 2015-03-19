@@ -178,7 +178,8 @@ namespace ExtendedRoadUpgrade {
 
         UITextureAtlas CreateTextureAtlas(string textureFile, string atlasName, Material baseMaterial, int spriteWidth, int spriteHeight, string[] spriteNames) {
 
-            Texture2D tex = new Texture2D(spriteWidth * spriteNames.Length, spriteHeight);
+            Texture2D tex = new Texture2D(spriteWidth * spriteNames.Length, spriteHeight, TextureFormat.ARGB32, false);
+            tex.filterMode = FilterMode.Bilinear;
 
             { // LoadTexture
                 System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
