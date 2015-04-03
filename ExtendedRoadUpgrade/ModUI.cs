@@ -14,6 +14,8 @@ namespace ExtendedRoadUpgrade {
         public ToolMode toolMode {
             get { return _toolMode; }
             set {
+                if (value == _toolMode) return;
+
                 _toolMode = value;
                 if (tabstrip != null) {
                     tabstrip.selectedIndex = (int)_toolMode - 1;
