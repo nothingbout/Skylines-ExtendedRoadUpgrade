@@ -36,7 +36,7 @@ namespace ExtendedRoadUpgrade {
     }
 
     // Class name needs to be changed if the mod is reloaded while the game is running (or if you have another version of the mod installed)
-    class BuildTool118 : ToolBase {
+    class BuildTool144 : ToolBase {
 
         public ToolMode toolMode = ToolMode.None;
         public ToolError toolError = ToolError.None;
@@ -157,8 +157,8 @@ namespace ExtendedRoadUpgrade {
 
         public static ThreadingExtension Instance { get; private set; }
 
-        string[] twowayNames = { "Basic Road", "Large Road" };
-        string[] onewayNames = { "Oneway Road", "Large Oneway" };
+        string[] twowayNames = { "Basic Road", "Large Road", "Tram Track" };
+        string[] onewayNames = { "Oneway Road", "Large Oneway", "Oneway Tram Track" };
 
         Dictionary<int, string> roadPrefabNames = new Dictionary<int, string>();
         Dictionary<string, NetInfo> roadPrefabs = new Dictionary<string, NetInfo>();
@@ -184,7 +184,7 @@ namespace ExtendedRoadUpgrade {
         ModUI ui = new ModUI();
         bool loadingLevel = false;
 
-        BuildTool118 buildTool = null;
+        BuildTool144 buildTool = null;
 
         public void OnLevelUnloading() {
             ui.DestroyView();
@@ -211,9 +211,9 @@ namespace ExtendedRoadUpgrade {
 
         void CreateBuildTool() {
             if (buildTool == null) {
-                buildTool = ToolsModifierControl.toolController.gameObject.GetComponent<BuildTool118>();
+                buildTool = ToolsModifierControl.toolController.gameObject.GetComponent<BuildTool144>();
                 if (buildTool == null) {  
-                    buildTool = ToolsModifierControl.toolController.gameObject.AddComponent<BuildTool118>();
+                    buildTool = ToolsModifierControl.toolController.gameObject.AddComponent<BuildTool144>();
                     ModDebug.Log("Tool created: " + buildTool);
                 }
                 else {
@@ -225,17 +225,21 @@ namespace ExtendedRoadUpgrade {
         void DestroyBuildTool() {
             if (buildTool != null) {
                 ModDebug.Log("Tool destroyed");
-                BuildTool118.Destroy(buildTool);
+                BuildTool144.Destroy(buildTool);
                 buildTool = null;
             }
         }
 
         void FindRoadPrefabs() {
             foreach (NetCollection collection in NetCollection.FindObjectsOfType<NetCollection>()) {
-                if (collection.name == "Road") {
-                    foreach (NetInfo prefab in collection.m_prefabs) {
+                //ModDebug.Log("Collection: " + collection.name);
+                foreach (NetInfo prefab in collection.m_prefabs) {
+                    bool isRoadPrefab = prefab.GetComponent<NetInfo>() != null && prefab.GetComponent<RoadBaseAI>() != null;
+
+                    if (isRoadPrefab) {
                         roadPrefabNames[prefab.GetInstanceID()] = prefab.name;
                         roadPrefabs[prefab.name] = prefab;
+                        //ModDebug.Log("Road Prefab: " + prefab.name + "(" + isRoadPrefab + ")");
                     }
                 }
             }
@@ -396,7 +400,7 @@ namespace ExtendedRoadUpgrade {
             raycastInput.m_ignoreSegmentFlags = NetSegment.Flags.Untouchable;
 
             ToolBase.RaycastOutput raycastOutput;
-            if (BuildTool118.RayCast(raycastInput, out raycastOutput)) {
+            if (BuildTool144.RayCast(raycastInput, out raycastOutput)) {
 
                 int segmentIndex = raycastOutput.m_netSegment;
                 if (segmentIndex != 0) {
@@ -535,7 +539,8 @@ namespace ExtendedRoadUpgrade {
         string FindMatchingName(string originalName, string[] fromNames, string[] toNames) {
             for (int i = 0; i < fromNames.Length; ++i) {
                 if (originalName.Contains(fromNames[i])) {
-                    return originalName.Replace(fromNames[i], toNames[i]);
+                    string matchingName = originalName.Replace(fromNames[i], toNames[i]);
+                    return roadPrefabs.ContainsKey(matchingName) ? matchingName : null;
                 }
             }
             return null;

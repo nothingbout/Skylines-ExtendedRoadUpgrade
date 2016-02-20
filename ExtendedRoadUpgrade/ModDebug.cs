@@ -27,5 +27,18 @@ namespace ExtendedRoadUpgrade {
         static string ObjectToString(object s) {
             return s != null ? s.ToString() : "(null)";
         }
+
+        public static void LogHierarchy(UnityEngine.GameObject root, int depth = 0) {
+            string prefix = "";
+            for (int i = 0; i < depth; ++i) prefix += "  ";
+            Log(prefix + "GameObject: " + root.name);
+            foreach (var component in root.GetComponents<UnityEngine.Component>()) {
+                Log(prefix + "Component: " + component.GetType().Name);
+            }
+
+            foreach (UnityEngine.Transform child in root.transform) {
+                LogHierarchy(child.gameObject, depth + 1);
+            }
+        }
     }
 }

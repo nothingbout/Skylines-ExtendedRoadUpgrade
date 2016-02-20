@@ -27,16 +27,10 @@ namespace ExtendedRoadUpgrade {
                             originalBuiltinTabsripSelectedIndex = builtinTabstrip.selectedIndex;
                         }
 
-                        ignoreBuiltinTabstripEvents = true;
-                        ModDebug.Log("Setting builtin tabstrip mode: " + (-1));
-                        builtinTabstrip.selectedIndex = -1;
-                        ignoreBuiltinTabstripEvents = false;
+                        SafelySetBuiltinTabstripSelectedIndex(-1);
                     }
                     else if (builtinTabstrip.selectedIndex < 0 && originalBuiltinTabsripSelectedIndex >= 0) {
-                        ignoreBuiltinTabstripEvents = true;
-                        ModDebug.Log("Setting builtin tabstrip mode: " + originalBuiltinTabsripSelectedIndex);
-                        builtinTabstrip.selectedIndex = originalBuiltinTabsripSelectedIndex;
-                        ignoreBuiltinTabstripEvents = false;
+                        SafelySetBuiltinTabstripSelectedIndex(originalBuiltinTabsripSelectedIndex);
                     }
                 }
             }
@@ -48,7 +42,27 @@ namespace ExtendedRoadUpgrade {
             get { return tabstrip != null; }
         }
 
-        bool ignoreBuiltinTabstripEvents = false;
+        bool _ignoreBuiltinTabstripEvents = false;
+        bool ignoreBuiltinTabstripEvents {
+            get { return _ignoreBuiltinTabstripEvents; }
+            set {
+                //ModDebug.Log("Ignore builting tabstrip events: " + value);
+                _ignoreBuiltinTabstripEvents = value;
+            }
+        }
+
+        void SafelySetBuiltinTabstripSelectedIndex(int index) {
+            ignoreBuiltinTabstripEvents = true;
+            try {
+                ModDebug.Log("Setting builtin tabstrip mode: " + index);
+                builtinTabstrip.selectedIndex = index;
+            }
+            catch (Exception e) {
+                ModDebug.Error(e);
+            }
+            ignoreBuiltinTabstripEvents = false;
+        }
+
         int originalBuiltinTabsripSelectedIndex = -1;
         UIComponent roadsOptionPanel = null;
         UITabstrip builtinTabstrip = null;
@@ -82,7 +96,7 @@ namespace ExtendedRoadUpgrade {
 
             if (UIUtils.Instance == null) return false;
 
-            roadsOptionPanel = UIUtils.Instance.FindComponent<UIComponent>("RoadsOptionPanel", null, UIUtils.FindOptions.NameContains);
+            roadsOptionPanel = UIUtils.Instance.FindComponent<UIComponent>("RoadsOptionPanel(RoadsPanel)", null, UIUtils.FindOptions.NameContains);
             if (roadsOptionPanel == null || !roadsOptionPanel.gameObject.activeInHierarchy) return false;
 
             builtinTabstrip = UIUtils.Instance.FindComponent<UITabstrip>("ToolMode", roadsOptionPanel);
@@ -156,6 +170,7 @@ namespace ExtendedRoadUpgrade {
 
             if (builtinModeChangedHandler == null) {
                 builtinModeChangedHandler = (UIComponent component, int index) => {
+                    ModDebug.Log(string.Format("Builtin mode changed to: {0}, ignore: {1}", index, ignoreBuiltinTabstripEvents));
                     if (!ignoreBuiltinTabstripEvents) {
                         if (selectedToolModeChanged != null) selectedToolModeChanged(ToolMode.None);
                     }
