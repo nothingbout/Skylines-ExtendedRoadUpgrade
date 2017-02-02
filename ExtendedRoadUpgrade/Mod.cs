@@ -360,7 +360,10 @@ namespace ExtendedRoadUpgrade {
                 }
             }
             else {
-                ui.toolMode = ToolMode.None;
+                if (ui.toolMode != ToolMode.None)
+                {
+                    ui.toolMode = ToolMode.None;
+                }
 
                 if (ToolsModifierControl.toolController.CurrentTool == buildTool) {
                     ToolsModifierControl.toolController.CurrentTool = netTool;
